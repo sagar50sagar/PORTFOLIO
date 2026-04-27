@@ -1,113 +1,113 @@
-/*===== MENU SHOW & HIDE =====*/ 
-const navMenu = document.getElementById('nav-menu'),
-      navToggle = document.getElementById('nav-toggle'),
-      navClose = document.querySelectorAll('.nav__link')
+/* ================================================
+   main.js — Portfolio interactions
+================================================ */
 
-if(navToggle){
-    navToggle.addEventListener('click', () =>{
-        navMenu.classList.toggle('show')
-    })
-}
+// ── Header scroll ──────────────────────────────
+const header = document.getElementById('header');
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
 
-navClose.forEach(n => n.addEventListener('click', () => {
-    navMenu.classList.remove('show')
-}))
 
-/*===== PROMPT PLAYGROUND LOGIC =====*/
-const personas = {
-    architect: "System Prompt: You are a Senior Web Architect. Analyze the provided codebase for scalability, modularity, and ADR compliance. Identify bottlenecks in the data layer.",
-    debugger: "System Prompt: You are an Elite Debugger. Trace the execution flow of the provided function. Identify potential memory leaks and edge case failures in the async loop.",
-    creative: "System Prompt: You are a GenAI Creative Strategist. Propose 3 unique ways to leverage LLMs for enhancing user engagement in this specific portfolio vertical."
+// ── Mobile menu ────────────────────────────────
+const navToggle  = document.getElementById('nav-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileClose = document.getElementById('mobile-close');
+
+const openMenu = () => {
+  mobileMenu.classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+const closeMenu = () => {
+  mobileMenu.classList.remove('open');
+  document.body.style.overflow = '';
 };
 
-function runPlayground() {
-    const persona = document.getElementById('prompt-persona').value;
-    const output = document.getElementById('prompt-output');
-    output.style.opacity = '0';
-    
-    setTimeout(() => {
-        output.innerText = personas[persona];
-        output.style.opacity = '1';
-        output.classList.add('pulse');
-        setTimeout(() => output.classList.remove('pulse'), 2000);
-    }, 300);
+navToggle?.addEventListener('click', openMenu);
+mobileClose?.addEventListener('click', closeMenu);
+
+// Close on any mobile link click
+document.querySelectorAll('.mobile-menu__link').forEach(link => {
+  link.addEventListener('click', closeMenu);
+});
+
+// Close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMenu();
+});
+
+
+// ── Reveal on scroll ───────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -48px 0px'
+});
+
+revealEls.forEach(el => revealObserver.observe(el));
+
+
+// ── Counter animation ──────────────────────────
+function animateCount(el, target, suffix = '', duration = 1400) {
+  const start = performance.now();
+  const update = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(eased * target) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
 }
 
-/*===== PROJECT IMPACT CALCULATOR =====*/
-function simulateImpact() {
-    const metrics = {
-        users: { id: 'metric-users', target: 5000, suffix: '+' },
-        latency: { id: 'metric-latency', target: 120, suffix: 'ms' },
-        uptime: { id: 'metric-uptime', target: 99.9, suffix: '%' }
-    };
+const counters = document.querySelectorAll('[data-count]');
 
-    Object.keys(metrics).forEach(key => {
-        const m = metrics[key];
-        const el = document.getElementById(m.id);
-        let current = 0;
-        const duration = 2000;
-        const step = m.target / (duration / 16);
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el     = entry.target;
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.dataset.suffix || '';
+      animateCount(el, target, suffix);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.6 });
 
-        const counter = setInterval(() => {
-            current += step;
-            if (current >= m.target) {
-                el.innerText = m.target + m.suffix;
-                clearInterval(counter);
-            } else {
-                el.innerText = Math.floor(current) + (key === 'uptime' ? current.toFixed(1).split('.')[1] : '') + m.suffix;
-                if(key === 'uptime') el.innerText = current.toFixed(1) + m.suffix;
-            }
-        }, 16);
-    });
-}
-
-// Global scope for HTML onclick
-window.runPlayground = runPlayground;
-window.simulateImpact = simulateImpact;
-
-/*===== HEADER BACKGROUND CHANGE =====*/ 
-function scrollHeader(){
-    const header = document.getElementById('header')
-    if(this.scrollY >= 50) header.classList.add('scrolled'); else header.classList.remove('scrolled')
-}
-window.addEventListener('scroll', scrollHeader)
-
-/*===== SCROLL SECTIONS ACTIVE LINK =====*/
-const sections = document.querySelectorAll('section[id]')
-
-function scrollActive(){
-    const scrollY = window.pageYOffset
-
-    sections.forEach(current =>{
-        const sectionHeight = current.offsetHeight
-        const sectionTop = current.offsetTop - 100;
-        const sectionId = current.getAttribute('id')
-
-        if(scrollY > sectionTop && scrollY <= sectionTop + sectionHeight){
-            document.querySelector('.nav__list a[href*=' + sectionId + ']')?.classList.add('active')
-        }else{
-            document.querySelector('.nav__list a[href*=' + sectionId + ']')?.classList.remove('active')
-        }
-    })
-}
-window.addEventListener('scroll', scrollActive)
-
-/*===== SCROLL REVEAL ANIMATION =====*/
-const sr = ScrollReveal({
-    origin: 'top',
-    distance: '60px',
-    duration: 2000,
-    delay: 200,
-})
-
-sr.reveal('.hero__content, .section-title')
-sr.reveal('.hero__img-container', {origin: 'right', delay: 400})
-sr.reveal('.hero__badge', {delay: 100})
-sr.reveal('.hero__subtitle', {delay: 300})
-sr.reveal('.hero__cta', {delay: 500})
-sr.reveal('.card', {interval: 100})
+counters.forEach(el => counterObserver.observe(el));
 
 
+// ── Active nav link on scroll ──────────────────
+const sections  = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('.nav__link[href^="#"]');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+      });
+    }
+  });
+}, { rootMargin: '-40% 0px -40% 0px' });
+
+sections.forEach(s => sectionObserver.observe(s));
 
 
-
+// ── Smooth scroll for anchor links ─────────────
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
